@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ExpenseIQ Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  /* Blue-white-red-violet palette */
+  --navy:       #0a1628;
+  --blue-deep:  #0d2244;
+  --blue-mid:   #1a3a6e;
+  --blue:       #1e50a2;
+  --blue-bright:#2d6cdf;
+  --blue-light: #5b9bf8;
+  --blue-pale:  #dce8fd;
+  --blue-ghost: #eef4ff;
+
+  --rv:         #8b1a6b;   /* red-violet core */
+  --rv-bright:  #c0257e;   /* red-violet vivid */
+  --rv-light:   #f3d0e8;
+  --rv-ghost:   #fdf0f8;
+
+  --white:      #ffffff;
+  --off-white:  #f8f9fc;
+  --surface:    #ffffff;
+  --surface2:   #f3f7ff;
+
+  --text:       #0d1c38;
+  --text-mid:   #344870;
+  --muted:      #7a8db0;
+  --muted2:     #b0bed8;
+  --border:     rgba(30,80,162,0.1);
+  --border-md:  rgba(30,80,162,0.18);
+
+  --radius:     16px;
+  --radius-sm:  10px;
+  --radius-xs:  7px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--off-white);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 13.5px;
+}
+
+/* ─── HEADER ─────────────────────────────────────── */
+header {
+  background: var(--navy);
+  padding: 0 40px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-family: 'Playfair Display', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: -0.3px;
+}
+.logo em { color: var(--blue-light); font-style: normal; }
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+.fy-tag {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--blue-light);
+  background: rgba(91,155,248,0.12);
+  border: 1px solid rgba(91,155,248,0.25);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+/* ─── LAYOUT ──────────────────────────────────────── */
+.container { max-width: 1240px; margin: auto; padding: 32px 40px; }
+
+/* ─── KPI ─────────────────────────────────────────── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+.kpi:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(30,80,162,0.1); }
+
+.kpi::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.kpi:nth-child(1)::before { background: var(--blue-bright); }
+.kpi:nth-child(2)::before { background: var(--rv-bright); }
+.kpi:nth-child(3)::before { background: var(--blue-light); }
+.kpi:nth-child(4)::before { background: var(--blue-mid); }
+
+.kpi-label {
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.kpi-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.kpi:nth-child(1) .kpi-dot { background: var(--blue-bright); }
+.kpi:nth-child(2) .kpi-dot { background: var(--rv-bright); }
+.kpi:nth-child(3) .kpi-dot { background: var(--blue-light); }
+.kpi:nth-child(4) .kpi-dot { background: var(--blue-mid); }
+
+.kpi-value {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  line-height: 1;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+.kpi-sub { font-size: 11px; color: var(--muted2); }
+
+/* ─── CARD ────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 26px;
+  margin-bottom: 18px;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.card-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.2px;
+}
+.card-chip {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: var(--blue-ghost);
+  color: var(--blue);
+  border: 1px solid var(--blue-pale);
+  letter-spacing: 0.04em;
+}
+
+/* ─── FORM ────────────────────────────────────────── */
+.form-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field-label {
+  font-size: 10.5px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+}
+
+input, select {
+  background: var(--surface2);
+  border: 1px solid var(--border-md);
+  color: var(--text);
+  padding: 10px 13px;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.15s, background 0.15s;
+  height: 40px;
+}
+input:focus, select:focus {
+  border-color: var(--blue-bright);
+  background: var(--white);
+}
+input::placeholder { color: var(--muted2); }
+select option { background: var(--white); }
+
+.btn {
+  background: var(--blue);
+  color: var(--white);
+  border: none;
+  padding: 0 20px;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  height: 40px;
+  white-space: nowrap;
+  transition: background 0.15s, transform 0.1s;
+  letter-spacing: 0.01em;
+}
+.btn:hover { background: var(--blue-bright); transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--rv-bright);
+  border: 1px solid var(--rv-bright);
+}
+.btn-outline:hover { background: var(--rv-ghost); }
+
+.status { margin-top: 10px; font-size: 12px; min-height: 16px; font-weight: 500; }
+.s-ok  { color: #1a7a4a; }
+.s-err { color: var(--rv-bright); }
+.s-pend { color: var(--muted); }
+
+/* ─── BUDGET CARDS ────────────────────────────────── */
+.budget-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+
+.bcard {
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  border: 1px solid transparent;
+  transition: transform 0.15s;
+}
+.bcard:hover { transform: translateY(-1px); }
+
+.bcard.ok   { background: #eef6ff; border-color: rgba(30,80,162,0.15); }
+.bcard.over { background: var(--rv-ghost); border-color: rgba(192,37,126,0.2); }
+.bcard.unset{ background: var(--surface2); border-color: var(--border); }
+
+.bcat {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 10px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  margin-bottom: 10px;
+}
+.ok   .bcat { color: var(--blue); }
+.over .bcat { color: var(--rv-bright); }
+.unset .bcat { color: var(--muted); }
+
+.bdot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.ok   .bdot { background: var(--blue-bright); }
+.over .bdot { background: var(--rv-bright); }
+.unset .bdot { background: var(--muted2); }
+
+.bval {
+  font-family: 'Playfair Display', serif;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.ok   .bval { color: var(--blue); }
+.over .bval { color: var(--rv-bright); }
+.unset .bval { color: var(--muted); }
+
+.bsub { font-size: 10.5px; }
+.ok   .bsub { color: var(--blue-bright); }
+.over .bsub { color: var(--rv-bright); opacity: 0.8; }
+.unset .bsub { color: var(--muted2); }
+
+.bbar { height: 3px; border-radius: 2px; margin-top: 10px; background: rgba(0,0,0,0.06); }
+.bbar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+.ok   .bbar-fill { background: linear-gradient(90deg, var(--blue), var(--blue-light)); }
+.over .bbar-fill { background: linear-gradient(90deg, var(--rv), var(--rv-bright)); }
+
+/* ─── GRID LAYOUTS ────────────────────────────────── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 18px; }
+
+.emp-row { display: flex; gap: 8px; margin-bottom: 18px; }
+.emp-row input { flex: 1; }
+
+/* ─── TABLE ───────────────────────────────────────── */
+table { width: 100%; border-collapse: collapse; }
+th {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  padding: 7px 11px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+th:first-child { border-radius: var(--radius-xs) 0 0 0; }
+th:last-child  { border-radius: 0 var(--radius-xs) 0 0; }
+td { padding: 10px 11px; border-bottom: 1px solid var(--border); font-size: 12.5px; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--blue-ghost); }
+
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 500;
+}
+.b-travel  { background: var(--blue-pale);  color: var(--blue); }
+.b-software{ background: #e0ecff;           color: var(--blue-mid); }
+.b-office  { background: #e8e4fd;           color: #4a38b5; }
+.b-meals   { background: var(--rv-light);   color: var(--rv); }
+.b-other   { background: var(--surface2);   color: var(--muted); }
+
+.amt {
+  font-family: 'Playfair Display', serif;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: right;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+.emp-id { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; letter-spacing: 0.02em; }
+.empty  { color: var(--muted2); font-size: 12px; padding: 28px 0; text-align: center; }
+
+/* ─── SECTION LABEL ───────────────────────────────── */
+.section-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 12px;
+  padding-left: 2px;
+}
+
+/* ─── RESPONSIVE ──────────────────────────────────── */
+@media (max-width: 1000px) {
+  .kpi-grid { grid-template-columns: repeat(2,1fr); }
+  .two-col { grid-template-columns: 1fr; }
+  .budget-grid { grid-template-columns: repeat(3,1fr); }
+  .form-row { grid-template-columns: 1fr 1fr; }
+  .container, header { padding-left: 20px; padding-right: 20px; }
+}
+@media (max-width: 560px) {
+  .budget-grid { grid-template-columns: repeat(2,1fr); }
+  .form-row { grid-template-columns: 1fr; }
+  .kpi-value { font-size: 22px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Expense<em>IQ</em></div>
+  <div class="header-right">
+    <span class="fy-tag">FY 2025–26</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- KPI -->
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label"><span class="kpi-dot"></span>Total spent</div>
+      <div class="kpi-value" id="kTotal">₹0</div>
+      <div class="kpi-sub">All categories</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label"><span class="kpi-dot"></span>Average entry</div>
+      <div class="kpi-value" id="kAvg">₹0</div>
+      <div class="kpi-sub">Per transaction</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label"><span class="kpi-dot"></span>Highest expense</div>
+      <div class="kpi-value" id="kMax">₹0</div>
+      <div class="kpi-sub">Single entry</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label"><span class="kpi-dot"></span>Transactions</div>
+      <div class="kpi-value" id="kCount">0</div>
+      <div class="kpi-sub">Total entries logged</div>
+    </div>
+  </div>
+
+  <!-- ADD EXPENSE -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Add expense</span>
+      <span class="card-chip">New entry</span>
+    </div>
+    <div class="form-row">
+      <div class="field">
+        <span class="field-label">Description</span>
+        <input id="desc" placeholder="e.g. Cab from airport to Pune"/>
+      </div>
+      <div class="field">
+        <span class="field-label">Amount (₹)</span>
+        <input id="amount" type="number" min="0" placeholder="0.00"/>
+      </div>
+      <div class="field">
+        <span class="field-label">Employee ID</span>
+        <input id="emp" placeholder="e.g. EMP001"/>
+      </div>
+      <div class="field">
+        <span class="field-label" style="opacity:0">x</span>
+        <button class="btn" onclick="submitExpense()">Add entry</button>
+      </div>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- BUDGET STATUS -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Budget status</span>
+      <span class="card-chip">Synced from config</span>
+    </div>
+    <div class="budget-grid" id="budgetGrid"></div>
+  </div>
+
+  <!-- CHARTS -->
+  <div class="two-col">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-header"><span class="card-title">Category breakdown</span></div>
+      <canvas id="summaryChart" height="230"></canvas>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <div class="card-header"><span class="card-title">Spend overview</span></div>
+      <canvas id="analyticsChart" height="230"></canvas>
+    </div>
+  </div>
+  <div style="height:18px"></div>
+
+  <!-- EMPLOYEE + TABLE -->
+  <div class="two-col">
+    <div class="card" style="margin-bottom:0">
+      <div class="card-header">
+        <span class="card-title">Employee breakdown</span>
+      </div>
+      <div class="emp-row">
+        <input id="empFilter" placeholder="Enter employee ID"/>
+        <button class="btn btn-outline" onclick="getEmployeeExpenses()">Analyse</button>
+      </div>
+      <canvas id="employeeChart" height="200"></canvas>
+      <div id="empMsg" class="empty" style="display:none">No data for this employee.</div>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <div class="card-header">
+        <span class="card-title">Recent transactions</span>
+        <span class="card-chip">Last 8</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Description</th>
+            <th>Employee</th>
+            <th>Category</th>
+            <th style="text-align:right">Amount</th>
+          </tr>
+        </thead>
+        <tbody id="txTable">
+          <tr><td colspan="4" class="empty">No transactions yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BASE = "http://127.0.0.1:8000";
+const CATS = ["Travel","Software","Office","Meals","Other"];
+const COLORS = ["#2d6cdf","#1a3a6e","#6b54d4","#c0257e","#7a8db0"];
+
+let sChart, aChart, eChart;
+let budgets = {Travel:0,Software:0,Office:0,Meals:0,Other:0};
+let summary = {};
+
+Chart.defaults.color = "#7a8db0";
+Chart.defaults.borderColor = "rgba(30,80,162,0.08)";
+Chart.defaults.font.family = "'DM Sans',sans-serif";
+Chart.defaults.font.size = 11;
+
+function fmt(n) { return "₹" + Math.round(n).toLocaleString("en-IN"); }
+
+function badgeClass(cat) {
+  return {Travel:"b-travel",Software:"b-software",Office:"b-office",Meals:"b-meals",Other:"b-other"}[cat] || "b-other";
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById("status");
+  el.className = "status s-" + (type||"");
+  el.textContent = msg;
+}
+
+async function fetchBudgets() {
+  try {
+    const res = await fetch(`${BASE}/budgets`);
+    const data = await res.json();
+    CATS.forEach(cat => { if (data[cat]) budgets[cat] = data[cat].budget; });
+  } catch(_) {}
+}
+
+async function submitExpense() {
+  const d = document.getElementById("desc").value.trim();
+  const a = parseFloat(document.getElementById("amount").value);
+  const e = document.getElementById("emp").value.trim();
+  if (!d||!a||a<=0||!e) { setStatus("Please fill all fields correctly.","err"); return; }
+  setStatus("Submitting…","pend");
+  try {
+    const res = await fetch(`${BASE}/expenses`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({description:d,amount:a,employee_id:e})});
+    if (!res.ok) throw new Error("Server error "+res.status);
+    const data = await res.json();
+    setStatus("Added — categorized as " + data.category,"ok");
+    document.getElementById("desc").value = "";
+    document.getElementById("amount").value = "";
+    await updateAll();
+  } catch(err) { setStatus("Failed: "+err.message,"err"); }
+}
+
+function renderBudgetCards() {
+  document.getElementById("budgetGrid").innerHTML = CATS.map(cat => {
+    const spent = summary[cat]||0;
+    const budget = budgets[cat]||0;
+    let cls="unset", sub="No budget set", pct=0;
+    if (budget > 0) {
+      pct = Math.min(Math.round(spent/budget*100),100);
+      cls = spent > budget ? "over" : "ok";
+      sub = "of " + fmt(budget) + " · " + pct + "%";
+    }
+    return `<div class="bcard ${cls}">
+      <div class="bcat"><span class="bdot"></span>${cat}</div>
+      <div class="bval">${fmt(spent)}</div>
+      <div class="bsub">${sub}</div>
+      ${budget > 0 ? `<div class="bbar"><div class="bbar-fill" style="width:${pct}%"></div></div>` : ""}
+    </div>`;
+  }).join("");
+}
+
+async function getSummary() {
+  try {
+    const res = await fetch(`${BASE}/expenses/summary`);
+    summary = await res.json();
+    if (sChart) sChart.destroy();
+    sChart = new Chart(document.getElementById("summaryChart"), {
+      type: "doughnut",
+      data: {
+        labels: Object.keys(summary),
+        datasets: [{
+          data: Object.values(summary).map(v => Math.round(v)),
+          backgroundColor: COLORS,
+          borderWidth: 4,
+          borderColor: "#ffffff",
+          hoverOffset: 7
+        }]
+      },
+      options: {
+        cutout: "66%",
+        animation: {duration:700},
+        plugins: {
+          legend: {
+            position: "bottom",
+            labels: {padding:14, usePointStyle:true, pointStyle:"circle", font:{size:11}}
+          },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${fmt(ctx.parsed)}` } }
+        }
+      }
+    });
+    renderBudgetCards();
+  } catch(e) {}
+}
+
+async function getAnalytics() {
+  try {
+    const res = await fetch(`${BASE}/expenses/analytics`);
+    const data = await res.json();
+    if (aChart) aChart.destroy();
+    aChart = new Chart(document.getElementById("analyticsChart"), {
+      type: "bar",
+      data: {
+        labels: ["Total","Average","Highest"],
+        datasets: [{
+          data: [Math.round(data.total_expense),Math.round(data.average_expense),Math.round(data.max_expense)],
+          backgroundColor: ["#2d6cdf","#c0257e","#5b9bf8"],
+          borderRadius: 7,
+          borderSkipped: false,
+          barThickness: 38
+        }]
+      },
+      options: {
+        animation: {duration:700},
+        plugins: {
+          legend: {display:false},
+          tooltip: { callbacks: { label: ctx => ` ${fmt(ctx.parsed.y)}` } }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {color:"rgba(30,80,162,0.06)"},
+            ticks: {callback: v => "₹"+Math.round(v).toLocaleString("en-IN")}
+          },
+          x: {grid:{display:false}}
+        }
+      }
+    });
+    document.getElementById("kTotal").textContent = fmt(data.total_expense);
+    document.getElementById("kAvg").textContent   = fmt(data.average_expense);
+    document.getElementById("kMax").textContent   = fmt(data.max_expense);
+    document.getElementById("kCount").textContent = data.transaction_count;
+  } catch(e) {}
+}
+
+async function getAllExpenses() {
+  try {
+    const res = await fetch(`${BASE}/expenses`);
+    const data = await res.json();
+    const tbody = document.getElementById("txTable");
+    if (!data.length) { tbody.innerHTML=`<tr><td colspan="4" class="empty">No transactions yet.</td></tr>`; return; }
+    tbody.innerHTML = data.slice(-8).reverse().map(e => `<tr>
+      <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e.description}</td>
+      <td><span class="emp-id">${e.employee_id}</span></td>
+      <td><span class="badge ${badgeClass(e.category)}">${e.category}</span></td>
+      <td class="amt">${fmt(e.amount)}</td>
+    </tr>`).join("");
+  } catch(e) {}
+}
+
+async function getEmployeeExpenses() {
+  const emp = document.getElementById("empFilter").value.trim();
+  if (!emp) { alert("Enter an Employee ID"); return; }
+  try {
+    const res = await fetch(`${BASE}/expenses/employee/${emp}`);
+    const data = await res.json();
+    const msg = document.getElementById("empMsg");
+    if (!data.length) {
+      if (eChart) { eChart.destroy(); eChart=null; }
+      msg.style.display = "block"; return;
+    }
+    msg.style.display = "none";
+    const totals = {};
+    data.forEach(e => { totals[e.category]=(totals[e.category]||0)+e.amount; });
+    if (eChart) eChart.destroy();
+    eChart = new Chart(document.getElementById("employeeChart"), {
+      type: "doughnut",
+      data: {
+        labels: Object.keys(totals),
+        datasets: [{
+          data: Object.values(totals).map(v=>Math.round(v)),
+          backgroundColor: COLORS,
+          borderWidth: 4,
+          borderColor: "#ffffff"
+        }]
+      },
+      options: {
+        cutout:"62%",
+        animation:{duration:600},
+        plugins:{
+          legend:{position:"bottom",labels:{padding:12,usePointStyle:true,pointStyle:"circle",font:{size:11}}},
+          tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${fmt(ctx.parsed)}`}}
+        }
+      }
+    });
+  } catch(e) { alert("Could not fetch employee data."); }
+}
+
+async function updateAll() {
+  await fetchBudgets();
+  await Promise.all([getSummary(), getAnalytics(), getAllExpenses()]);
+}
+
+window.onload = updateAll;
+</script>
+</body>
+</html>

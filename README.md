@@ -1,1 +1,2 @@
-# backend-hackathon-2026
+# ExpenseIQ
+LLM based auto Expence monitoring and Categorizing 
